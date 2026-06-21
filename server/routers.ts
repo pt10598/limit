@@ -235,7 +235,7 @@ export const appRouter = router({
         }
         await createOrUpdateIdDocument(updateData);
         return { success: true, url: dataUrl };
-      });
+      }),
 
     updateBankInfo: protectedProcedure
       .input(z.object({
