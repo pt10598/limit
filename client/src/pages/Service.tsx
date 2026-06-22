@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 const LINE_ID = "dk886dk";
 const LINE_URL = `https://line.me/ti/p/~${LINE_ID}`;
-const QR_URL = `https://qr-official.line.me/sid/M/${LINE_ID}.png`;
+const QR_URL = "/manus-storage/line_qrcode_jixiandai_1c25b8cf.png";
 
 export default function ServicePage() {
   useEffect(() => {
@@ -74,10 +74,7 @@ export default function ServicePage() {
             src={QR_URL}
             alt="LINE QR Code"
             className="w-52 h-52 object-contain"
-            onError={(e) => {
-              // fallback: use Google Charts QR API
-              (e.target as HTMLImageElement).src = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(LINE_URL)}&choe=UTF-8`;
-            }}
+
           />
         </div>
 
