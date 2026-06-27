@@ -68,7 +68,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
   if (!db) return undefined;
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  const result = await db.select().from(users).where(and(eq(users.openId, openId), eq(users.app_type, 'limitdai'))).limit(1);
   return result[0];
 }
 
@@ -94,7 +94,7 @@ export async function deleteUser(userId: number) {
 export async function getUserByPhone(phone: string) {
   const db = await getDb();
   if (!db) return undefined;
-  const result = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
+  const result = await db.select().from(users).where(and(eq(users.phone, phone), eq(users.app_type, 'limitdai'))).limit(1);
   return result[0];
 }
 
@@ -102,7 +102,6 @@ export async function createUserWithPhone(phone: string, passwordHash: string, n
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const openId = `phone_${phone}_${Date.now()}`;
-  const now = new Date();
   await db.insert(users).values({
     openId,
     phone,
@@ -110,25 +109,24 @@ export async function createUserWithPhone(phone: string, passwordHash: string, n
     name: name ?? null,
     loginMethod: "phone",
     role: "user",
-    status: "active",
-    createdAt: now,
-    updatedAt: now,
+    lastSignedIn: new Date(),
+    app_type: 'limitdai',
   });
-  const result = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
+  const result = await db.select().from(users).where(and(eq(users.phone, phone), eq(users.app_type, 'limitdai'))).limit(1);
   return result[0];
 }
 
 export async function getUserById(id: number) {
   const db = await getDb();
   if (!db) return undefined;
-  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  const result = await db.select().from(users).where(and(eq(users.id, id), eq(users.app_type, 'limitdai'))).limit(1);
   return result[0];
 }
 
 export async function getAllUsers() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(users).orderBy(desc(users.createdAt));
+  return db.select().from(users).where(eq(users.app_type, 'limitdai')).orderBy(desc(users.createdAt));
 }
 
 export async function getUsersByRole(role: 'user' | 'admin') {
@@ -136,14 +134,14 @@ export async function getUsersByRole(role: 'user' | 'admin') {
   if (!db) return [];
   // 預設只顯示未刪除的用戶
   const { isNull } = await import('drizzle-orm');
-  return db.select().from(users).where(and(eq(users.role, role), isNull(users.deletedAt))).orderBy(desc(users.createdAt));
+  return db.select().from(users).where(and(eq(users.role, role), isNull(users.deletedAt), eq(users.app_type, 'limitdai'))).orderBy(desc(users.createdAt));
 }
 
 export async function getDeletedUsers() {
   const db = await getDb();
   if (!db) return [];
   const { isNotNull } = await import('drizzle-orm');
-  return db.select().from(users).where(and(eq(users.role, 'user'), isNotNull(users.deletedAt))).orderBy(desc(users.deletedAt));
+  return db.select().from(users).where(and(eq(users.role, 'user'), isNotNull(users.deletedAt), eq(users.app_type, 'limitdai'))).orderBy(desc(users.deletedAt));
 }
 
 // ─── User Profiles ────────────────────────────────────────────────────────────
@@ -171,14 +169,14 @@ export async function upsertUserProfile(data: InsertUserProfile) {
 export async function getIdDocument(userId: number) {
   const db = await getDb();
   if (!db) return undefined;
-  const result = await db.select().from(idDocuments).where(eq(idDocuments.userId, userId)).orderBy(desc(idDocuments.createdAt)).limit(1);
+  const result = await db.select().from(idDocuments).where(and(eq(idDocuments.userId, userId), eq(idDocuments.app_type, 'limitdai'))).orderBy(desc(idDocuments.createdAt)).limit(1);
   return result[0];
 }
 
 export async function getAllIdDocuments() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(idDocuments).orderBy(desc(idDocuments.createdAt));
+  return db.select().from(idDocuments).where(eq(idDocuments.app_type, 'limitdai')).orderBy(desc(idDocuments.createdAt));
 }
 
 export async function createOrUpdateIdDocument(data: InsertIdDocument) {
@@ -199,7 +197,7 @@ export async function createOrUpdateIdDocument(data: InsertIdDocument) {
     updateSet.verificationStatus = "pending";
     await db.update(idDocuments).set(updateSet).where(eq(idDocuments.userId, data.userId));
   } else {
-    await db.insert(idDocuments).values(data);
+    await db.insert(idDocuments).values({ ...data, app_type: 'limitdai' });
   }
 }
 
@@ -224,26 +222,26 @@ export async function updateIdDocumentStatus(
 export async function createLoanApplication(data: InsertLoanApplication) {
   const db = await getDb();
   if (!db) return;
-  await db.insert(loanApplications).values(data);
+  await db.insert(loanApplications).values({ ...data, app_type: 'limitdai' });
 }
 
 export async function getLoanApplicationsByUser(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(loanApplications).where(eq(loanApplications.userId, userId)).orderBy(desc(loanApplications.createdAt));
+  return db.select().from(loanApplications).where(and(eq(loanApplications.userId, userId), eq(loanApplications.app_type, 'limitdai'))).orderBy(desc(loanApplications.createdAt));
 }
 
 export async function getLoanApplicationById(id: number) {
   const db = await getDb();
   if (!db) return undefined;
-  const result = await db.select().from(loanApplications).where(eq(loanApplications.id, id)).limit(1);
+  const result = await db.select().from(loanApplications).where(and(eq(loanApplications.id, id), eq(loanApplications.app_type, 'limitdai'))).limit(1);
   return result[0];
 }
 
 export async function getAllLoanApplications() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(loanApplications).orderBy(desc(loanApplications.createdAt));
+  return db.select().from(loanApplications).where(eq(loanApplications.app_type, 'limitdai')).orderBy(desc(loanApplications.createdAt));
 }
 
 export async function updateLoanApplicationStatus(
@@ -285,13 +283,13 @@ export async function getLoanStats() {
 export async function createRepayment(data: InsertRepayment) {
   const db = await getDb();
   if (!db) return;
-  await db.insert(repayments).values(data);
+  await db.insert(repayments).values({ ...data, app_type: 'limitdai' });
 }
 
 export async function getRepaymentsByLoan(loanId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(repayments).where(eq(repayments.loanId, loanId)).orderBy(desc(repayments.dueDate));
+  return db.select().from(repayments).where(and(eq(repayments.loanId, loanId), eq(repayments.app_type, 'limitdai'))).orderBy(desc(repayments.dueDate));
 }
 
 export async function updateRepayment(
