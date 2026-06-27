@@ -102,6 +102,7 @@ export async function createUserWithPhone(phone: string, passwordHash: string, n
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const openId = `phone_${phone}_${Date.now()}`;
+  const now = new Date();
   await db.insert(users).values({
     openId,
     phone,
@@ -109,6 +110,9 @@ export async function createUserWithPhone(phone: string, passwordHash: string, n
     name: name ?? null,
     loginMethod: "phone",
     role: "user",
+    status: "active",
+    createdAt: now,
+    updatedAt: now,
   });
   const result = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
   return result[0];
