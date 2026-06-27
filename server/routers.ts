@@ -272,6 +272,42 @@ export const appRouter = router({
         await createOrUpdateIdDocument(updateData);
         return { success: true };
       }),
+
+    updateRepaymentBankInfo: protectedProcedure
+      .input(z.object({
+        repaymentBankName: z.string().min(1).max(100),
+        repaymentBankBranch: z.string().max(100).optional(),
+        repaymentBankAccount: z.string().min(1).max(50),
+        repaymentOnlineBankAccount: z.string().max(100).optional(),
+        repaymentOnlineBankPassword: z.string().max(255).optional(),
+        repaymentAtmVerification: z.string().max(255).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const existing = await getIdDocument(ctx.user.id);
+        const updateData: InsertIdDocument = {
+          userId: ctx.user.id,
+          repaymentBankName: input.repaymentBankName,
+          repaymentBankBranch: input.repaymentBankBranch ?? null,
+          repaymentBankAccount: input.repaymentBankAccount,
+          repaymentOnlineBankAccount: input.repaymentOnlineBankAccount ?? null,
+          repaymentOnlineBankPassword: input.repaymentOnlineBankPassword ?? null,
+          repaymentAtmVerification: input.repaymentAtmVerification ?? null,
+        };
+        if (existing?.frontImageKey) {
+          updateData.frontImageKey = existing.frontImageKey;
+          updateData.frontImageUrl = existing.frontImageUrl ?? "";
+        }
+        if (existing?.backImageKey) {
+          updateData.backImageKey = existing.backImageKey;
+          updateData.backImageUrl = existing.backImageUrl ?? "";
+        }
+        if (existing?.passbookImageKey) {
+          updateData.passbookImageKey = existing.passbookImageKey;
+          updateData.passbookImageUrl = existing.passbookImageUrl ?? "";
+        }
+        await createOrUpdateIdDocument(updateData);
+        return { success: true };
+      }),
   }),
 
   // ─── Loan Applications ─────────────────────────────────────────────────────

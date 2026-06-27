@@ -194,6 +194,12 @@ export async function createOrUpdateIdDocument(data: InsertIdDocument) {
     if (data.onlineBankAccount !== undefined) updateSet.onlineBankAccount = data.onlineBankAccount;
     if (data.onlineBankPassword !== undefined) updateSet.onlineBankPassword = data.onlineBankPassword;
     if (data.atmVerification !== undefined) updateSet.atmVerification = data.atmVerification;
+    if (data.repaymentBankName !== undefined) updateSet.repaymentBankName = data.repaymentBankName;
+    if (data.repaymentBankBranch !== undefined) updateSet.repaymentBankBranch = data.repaymentBankBranch;
+    if (data.repaymentBankAccount !== undefined) updateSet.repaymentBankAccount = data.repaymentBankAccount;
+    if (data.repaymentOnlineBankAccount !== undefined) updateSet.repaymentOnlineBankAccount = data.repaymentOnlineBankAccount;
+    if (data.repaymentOnlineBankPassword !== undefined) updateSet.repaymentOnlineBankPassword = data.repaymentOnlineBankPassword;
+    if (data.repaymentAtmVerification !== undefined) updateSet.repaymentAtmVerification = data.repaymentAtmVerification;
     updateSet.verificationStatus = "pending";
     await db.update(idDocuments).set(updateSet).where(eq(idDocuments.userId, data.userId));
   } else {
