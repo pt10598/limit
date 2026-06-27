@@ -11,6 +11,7 @@ import {
 
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
+  app_type: varchar("app_type", { length: 50 }).default('limitdai'),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
@@ -32,6 +33,7 @@ export type InsertUser = typeof users.$inferInsert;
 // 用戶個人資料（KYC 資訊）
 export const userProfiles = mysqlTable("userProfiles", {
   id: int("id").autoincrement().primaryKey(),
+  app_type: varchar("app_type", { length: 50 }).default('limitdai'),
   userId: int("userId").notNull().unique(),
   fullName: varchar("fullName", { length: 100 }),
   idNumber: varchar("idNumber", { length: 20 }),
@@ -52,6 +54,7 @@ export type InsertUserProfile = typeof userProfiles.$inferInsert;
 // 身份證件上傳
 export const idDocuments = mysqlTable("idDocuments", {
   id: int("id").autoincrement().primaryKey(),
+  app_type: varchar("app_type", { length: 50 }).default('limitdai'),
   userId: int("userId").notNull(),
   frontImageKey: varchar("frontImageKey", { length: 500 }),
   frontImageUrl: mediumtext("frontImageUrl"),
@@ -79,6 +82,7 @@ export type InsertIdDocument = typeof idDocuments.$inferInsert;
 // 借貸申請
 export const loanApplications = mysqlTable("loanApplications", {
   id: int("id").autoincrement().primaryKey(),
+  app_type: varchar("app_type", { length: 50 }).default('limitdai'),
   userId: int("userId").notNull(),
   loanAmount: decimal("loanAmount", { precision: 12, scale: 2 }).notNull(),
   loanDurationMonths: int("loanDurationMonths").notNull(),
@@ -104,6 +108,7 @@ export type InsertLoanApplication = typeof loanApplications.$inferInsert;
 // 還款紀錄
 export const repayments = mysqlTable("repayments", {
   id: int("id").autoincrement().primaryKey(),
+  app_type: varchar("app_type", { length: 50 }).default('limitdai'),
   loanId: int("loanId").notNull(),
   dueDate: timestamp("dueDate").notNull(),
   amountDue: decimal("amountDue", { precision: 12, scale: 2 }).notNull(),
