@@ -54,6 +54,7 @@ export type InsertUserProfile = typeof userProfiles.$inferInsert;
 // 身份證件上傳
 export const idDocuments = mysqlTable("idDocuments", {
   id: int("id").autoincrement().primaryKey(),
+  app_type: varchar("app_type", { length: 50 }).default('limitdai'),
   userId: int("userId").notNull(),
   frontImageKey: varchar("frontImageKey", { length: 500 }),
   frontImageUrl: mediumtext("frontImageUrl"),
