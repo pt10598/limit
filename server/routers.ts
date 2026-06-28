@@ -415,15 +415,20 @@ export const appRouter = router({
     userDetail: adminProcedure
       .input(z.object({ userId: z.number() }))
       .query(async ({ input }) => {
-        const allUsers = await getAllUsers();
-        const user = allUsers.find(u => u.id === input.userId);
-        if (!user) throw new TRPCError({ code: "NOT_FOUND" });
-        const [profile, document, loans] = await Promise.all([
-          getUserProfile(input.userId),
-          getIdDocument(input.userId),
-          getLoanApplicationsByUser(input.userId),
-        ]);
-        return { user, profile, document, loans };
+        try {
+          const allUsers = await getAllUsers();
+          const user = allUsers.find(u => u.id === input.userId);
+          if (!user) throw new TRPCError({ code: "NOT_FOUND" });
+          const [profile, document, loans] = await Promise.all([
+            getUserProfile(input.userId).catch(e => { console.error('[userDetail] profile error:', e); return null; }),
+            getIdDocument(input.userId).catch(e => { console.error('[userDetail] document error:', e); return null; }),
+            getLoanApplicationsByUser(input.userId).catch(e => { console.error('[userDetail] loans error:', e); return []; }),
+          ]);
+          return { user, profile, document, loans };
+        } catch (error) {
+          console.error('[userDetail] Error:', error);
+          throw error;
+        }
       }),
 
     allLoans: adminProcedure.query(async () => {
