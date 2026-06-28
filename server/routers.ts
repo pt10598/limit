@@ -68,7 +68,8 @@ export const appRouter = router({
         // 雜湊密碼
         const passwordHash = await bcrypt.hash(input.password, 10);
         // 建立用戶
-        const user = await createUserWithPhone(input.phone, passwordHash, input.name);
+        const source_domain = ctx.req.headers.host ?? undefined;
+        const user = await createUserWithPhone(input.phone, passwordHash, input.name, source_domain);
         if (!user) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "建立帳號失敗" });
         // 建立 session
         const token = await sdk.createSessionToken(user.openId, { name: user.name ?? "" });
@@ -375,9 +376,19 @@ export const appRouter = router({
       };
     }),
 
-    users: adminProcedure.query(async () => {
+    users: adminProcedure.query(async ({ ctx }) => {
       try {
-        const regularUsers = await getUsersByRole('user');
+        const allUsers = await getUsersByRole('user');
+        // 根據 source_domain 過濾會員：只顯示該網站的會員
+        const currentHost = ctx.req.headers.host ?? '';
+        const regularUsers = allUsers.filter(u => {
+          // 極限貸的會員：source_domain 符合當前 host
+          if (currentHost.includes('limit-loan.com')) {
+            return u.source_domain === currentHost;
+          }
+          // 其他應用的會員：source_domain 是 NULL
+          return u.source_domain === null;
+        });
         console.log('[admin.users] regularUsers:', regularUsers.length);
         
         const profiles = await Promise.all(regularUsers.map(u => getUserProfile(u.id).catch(e => {
