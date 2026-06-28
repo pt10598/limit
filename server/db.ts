@@ -149,7 +149,8 @@ export async function getDeletedUsers() {
 export async function getUserProfile(userId: number) {
   const db = await getDb();
   if (!db) return undefined;
-  const result = await db.select().from(userProfiles).where(and(eq(userProfiles.userId, userId), eq(userProfiles.app_type, 'limitdai'))).limit(1);
+  const { or, isNull } = await import('drizzle-orm');
+  const result = await db.select().from(userProfiles).where(and(eq(userProfiles.userId, userId), or(eq(userProfiles.app_type, 'limitdai'), isNull(userProfiles.app_type)))).limit(1);
   return result[0];
 }
 
