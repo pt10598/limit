@@ -107,6 +107,7 @@ export async function createUserWithPhone(phone: string, passwordHash: string, n
     phone,
     passwordHash,
     name: name ?? null,
+    email: null,
     loginMethod: "phone",
     role: "user",
     lastSignedIn: new Date(),
@@ -169,7 +170,7 @@ export async function upsertUserProfile(data: InsertUserProfile) {
 export async function getIdDocument(userId: number) {
   const db = await getDb();
   if (!db) return undefined;
-  const result = await db.select().from(idDocuments).where(and(eq(idDocuments.userId, userId), eq(idDocuments.app_type, 'limitdai'))).orderBy(desc(idDocuments.createdAt)).limit(1);
+  const result = await db.select().from(idDocuments).where(eq(idDocuments.userId, userId)).orderBy(desc(idDocuments.createdAt)).limit(1);
   return result[0];
 }
 
@@ -203,7 +204,7 @@ export async function createOrUpdateIdDocument(data: InsertIdDocument) {
     updateSet.verificationStatus = "pending";
     await db.update(idDocuments).set(updateSet).where(eq(idDocuments.userId, data.userId));
   } else {
-    await db.insert(idDocuments).values({ ...data, app_type: 'limitdai' });
+    await db.insert(idDocuments).values(data);
   }
 }
 
