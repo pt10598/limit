@@ -376,15 +376,32 @@ export const appRouter = router({
     }),
 
     users: adminProcedure.query(async () => {
-      const regularUsers = await getUsersByRole('user');
-      const profiles = await Promise.all(regularUsers.map(u => getUserProfile(u.id)));
-      const docs = await Promise.all(regularUsers.map(u => getIdDocument(u.id)));
-      const docsWithSignedUrls = docs.map((doc) => doc ?? null);
-      return regularUsers.map((u, i) => ({
-        ...u,
-        profile: profiles[i] ?? null,
-        document: docsWithSignedUrls[i] ?? null,
-      }));
+      try {
+        const regularUsers = await getUsersByRole('user');
+        console.log('[admin.users] regularUsers:', regularUsers.length);
+        
+        const profiles = await Promise.all(regularUsers.map(u => getUserProfile(u.id).catch(e => {
+          console.error('[admin.users] getUserProfile error for user', u.id, e);
+          return null;
+        })));
+        console.log('[admin.users] profiles:', profiles.length);
+        
+        const docs = await Promise.all(regularUsers.map(u => getIdDocument(u.id).catch(e => {
+          console.error('[admin.users] getIdDocument error for user', u.id, e);
+          return null;
+        })));
+        console.log('[admin.users] docs:', docs.length);
+        
+        const docsWithSignedUrls = docs.map((doc) => doc ?? null);
+        return regularUsers.map((u, i) => ({
+          ...u,
+          profile: profiles[i] ?? null,
+          document: docsWithSignedUrls[i] ?? null,
+        }));
+      } catch (error) {
+        console.error('[admin.users] Error:', error);
+        throw error;
+      }
     }),
 
     admins: adminProcedure.query(async () => {
