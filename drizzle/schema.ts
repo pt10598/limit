@@ -11,11 +11,11 @@ import {
 
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
-  source_domain: varchar("source_domain", { length: 255 }),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
   phone: varchar('phone', { length: 20 }).unique(),
+  source_domain: varchar('source_domain', { length: 50 }).default('limitdai'),
   passwordHash: varchar('passwordHash', { length: 255 }),
   status: mysqlEnum('status', ['active', 'frozen']).notNull().default('active'),
   lastLoginIp: varchar('lastLoginIp', { length: 64 }),

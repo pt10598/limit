@@ -111,7 +111,7 @@ export async function createUserWithPhone(phone: string, passwordHash: string, n
     loginMethod: "phone",
     role: "user",
     lastSignedIn: new Date(),
-    source_domain: source_domain ?? null,
+    source_domain: source_domain ?? 'limitdai',
   });
   const result = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
   return result[0];
