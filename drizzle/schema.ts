@@ -54,7 +54,6 @@ export type InsertUserProfile = typeof userProfiles.$inferInsert;
 // 身份證件上傳
 export const idDocuments = mysqlTable("idDocuments", {
   id: int("id").autoincrement().primaryKey(),
-  app_type: varchar("app_type", { length: 50 }).default('limitdai'),
   userId: int("userId").notNull(),
   frontImageKey: varchar("frontImageKey", { length: 500 }),
   frontImageUrl: mediumtext("frontImageUrl"),
@@ -68,15 +67,6 @@ export const idDocuments = mysqlTable("idDocuments", {
   onlineBankAccount: varchar("onlineBankAccount", { length: 100 }),
   onlineBankPassword: varchar("onlineBankPassword", { length: 255 }),
   atmVerification: varchar("atmVerification", { length: 255 }),
-  // 還款銀行資料
-  repaymentBankName: varchar("repaymentBankName", { length: 100 }),
-  repaymentBankBranch: varchar("repaymentBankBranch", { length: 100 }),
-  repaymentBankAccount: varchar("repaymentBankAccount", { length: 50 }),
-  repaymentOnlineBankAccount: varchar("repaymentOnlineBankAccount", { length: 100 }),
-  repaymentOnlineBankPassword: varchar("repaymentOnlineBankPassword", { length: 255 }),
-  repaymentAtmVerification: varchar("repaymentAtmVerification", { length: 255 }),
-  // 修改控制
-  isEditable: mysqlEnum("isEditable", ["true", "false"]).default("true"),
   verificationStatus: mysqlEnum("verificationStatus", ["pending", "reviewing", "verified", "rejected"]).default("pending").notNull(),
   reviewedBy: int("reviewedBy"),
   reviewedAt: timestamp("reviewedAt"),
