@@ -10,7 +10,6 @@ import { notifyOwner } from "./_core/notification";
 import type { InsertIdDocument } from "../drizzle/schema";
 import bcrypt from "bcryptjs";
 import { notifyNewUser, notifyProfileUpdated, notifyDocumentUploaded, notifyLoanApplication } from "./email";
-import { storagePut } from "./storage";
 import {
   upsertUser,
   getUserByOpenId,
@@ -192,32 +191,26 @@ export const appRouter = router({
         mimeType: z.string().default("image/jpeg"),
       }))
       .mutation(async ({ ctx, input }) => {
-        // 將 Base64 轉換為 Buffer
-        const buffer = Buffer.from(input.base64, 'base64');
-        const key = `idDocuments/${ctx.user.id}/${input.side}-${Date.now()}`;
-        
-        // 上傳到 S3
-        const { url } = await storagePut(key, buffer, input.mimeType);
-        
+        const dataUrl = `data:${input.mimeType};base64,${input.base64}`;
         const existing = await getIdDocument(ctx.user.id);
         const updateData: InsertIdDocument = { userId: ctx.user.id };
         if (input.side === "front") {
-          updateData.frontImageKey = key;
-          updateData.frontImageUrl = url;
+          updateData.frontImageKey = `db:${ctx.user.id}:front`;
+          updateData.frontImageUrl = dataUrl;
           if (existing?.backImageKey) {
             updateData.backImageKey = existing.backImageKey;
             updateData.backImageUrl = existing.backImageUrl ?? "";
           }
         } else {
-          updateData.backImageKey = key;
-          updateData.backImageUrl = url;
+          updateData.backImageKey = `db:${ctx.user.id}:back`;
+          updateData.backImageUrl = dataUrl;
           if (existing?.frontImageKey) {
             updateData.frontImageKey = existing.frontImageKey;
             updateData.frontImageUrl = existing.frontImageUrl ?? "";
           }
         }
         await createOrUpdateIdDocument(updateData);
-        return { success: true, url };
+        return { success: true, url: dataUrl };
       }),
     uploadPassbook: protectedProcedure
       .input(z.object({
@@ -225,18 +218,12 @@ export const appRouter = router({
         mimeType: z.string().default("image/jpeg"),
       }))
       .mutation(async ({ ctx, input }) => {
-        // 將 Base64 轉換為 Buffer
-        const buffer = Buffer.from(input.base64, 'base64');
-        const key = `idDocuments/${ctx.user.id}/passbook-${Date.now()}`;
-        
-        // 上傳到 S3
-        const { url } = await storagePut(key, buffer, input.mimeType);
-        
+        const dataUrl = `data:${input.mimeType};base64,${input.base64}`;
         const existing = await getIdDocument(ctx.user.id);
         const updateData: InsertIdDocument = {
           userId: ctx.user.id,
-          passbookImageKey: key,
-          passbookImageUrl: url,
+          passbookImageKey: `db:${ctx.user.id}:passbook`,
+          passbookImageUrl: dataUrl,
         };
         if (existing?.frontImageKey) {
           updateData.frontImageKey = existing.frontImageKey;
@@ -247,7 +234,7 @@ export const appRouter = router({
           updateData.backImageUrl = existing.backImageUrl ?? "";
         }
         await createOrUpdateIdDocument(updateData);
-        return { success: true, url };
+        return { success: true, url: dataUrl };
       }),
 
     updateBankInfo: protectedProcedure
@@ -354,225 +341,157 @@ export const appRouter = router({
         // Manus 通知管理員
         try {
           await notifyOwner({
-            title: "📋 新借貸申請",
-            content: `用戶 ID ${ctx.user.id} 提交了新的借貸申請，金額：NT$ ${Number(input.loanAmount).toLocaleString()}，期限：${input.loanDurationMonths} 個月。請前往管理後台審核。`,
+            title: "新借款申請",
+            content: `用戶 ${userObj?.phone} 申請借款 ${input.loanAmount} 元，用途：${input.purpose}`,
           });
-        } catch (e) {
-          console.warn("[Notify] Failed to notify owner:", e);
-        }
-
+        } catch (e) { console.warn('[Manus] notifyOwner failed:', e); }
         return { success: true };
       }),
 
-    repayments: protectedProcedure
+    getById: protectedProcedure
       .input(z.object({ loanId: z.number() }))
       .query(async ({ ctx, input }) => {
         const loan = await getLoanApplicationById(input.loanId);
         if (!loan || loan.userId !== ctx.user.id) {
-          throw new TRPCError({ code: "FORBIDDEN" });
+          throw new TRPCError({ code: "FORBIDDEN", message: "無權訪問此借款申請" });
+        }
+        return loan;
+      }),
+  }),
+
+  // ─── Repayments ────────────────────────────────────────────────────────────
+  repayments: router({
+    getByLoan: protectedProcedure
+      .input(z.object({ loanId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const loan = await getLoanApplicationById(input.loanId);
+        if (!loan || loan.userId !== ctx.user.id) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "無權訪問此借款申請" });
         }
         return getRepaymentsByLoan(input.loanId);
       }),
   }),
 
-  // ─── Admin ─────────────────────────────────────────────────────────────────
+  // ─── Admin Routes ──────────────────────────────────────────────────────────
   admin: router({
-    stats: adminProcedure.query(async () => {
-      const [regularUsers, loans] = await Promise.all([
-        getUsersByRole('user'),
-        getLoanStats(),
-      ]);
-      return {
-        totalUsers: regularUsers.length,
-        ...loans,
-      };
+    users: router({
+      list: adminProcedure.query(async () => {
+        return getAllUsers();
+      }),
+
+      getById: adminProcedure
+        .input(z.object({ userId: z.number() }))
+        .query(async ({ input }) => {
+          return getUserById(input.userId);
+        }),
+
+      updateStatus: adminProcedure
+        .input(z.object({
+          userId: z.number(),
+          status: z.enum(["active", "frozen", "deleted"]),
+        }))
+        .mutation(async ({ input }) => {
+          await updateUserStatus(input.userId, input.status);
+          return { success: true };
+        }),
+
+      delete: adminProcedure
+        .input(z.object({ userId: z.number() }))
+        .mutation(async ({ input }) => {
+          await deleteUser(input.userId);
+          return { success: true };
+        }),
     }),
 
-    users: adminProcedure.query(async ({ ctx }) => {
-      try {
-        const allUsers = await getUsersByRole('user');
-        // 根據 source_domain 過濾：只顯示極限貸的會員
-        const regularUsers = allUsers.filter(u => u.source_domain === 'limitdai');
-        console.log('[admin.users] regularUsers:', regularUsers.length);
-        
-        const profiles = await Promise.all(regularUsers.map(u => getUserProfile(u.id).catch(e => {
-          console.error('[admin.users] getUserProfile error for user', u.id, e);
-          return null;
-        })));
-        console.log('[admin.users] profiles:', profiles.length);
-        
-        const docs = await Promise.all(regularUsers.map(u => getIdDocument(u.id).catch(e => {
-          console.error('[admin.users] getIdDocument error for user', u.id, e);
-          return null;
-        })));
-        console.log('[admin.users] docs:', docs.length);
-        
-        const docsWithSignedUrls = docs.map((doc) => doc ?? null);
-        return regularUsers.map((u, i) => ({
-          ...u,
-          profile: profiles[i] ?? null,
-          document: docsWithSignedUrls[i] ?? null,
-        }));
-      } catch (error) {
-        console.error('[admin.users] Error:', error);
-        throw error;
-      }
+    documents: router({
+      list: adminProcedure.query(async () => {
+        return getAllIdDocuments();
+      }),
+
+      updateStatus: adminProcedure
+        .input(z.object({
+          documentId: z.number(),
+          status: z.enum(["pending", "reviewing", "verified", "rejected"]),
+          reviewNote: z.string().optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+          await updateIdDocumentStatus(input.documentId, input.status, ctx.user.id, input.reviewNote);
+          return { success: true };
+        }),
     }),
 
-    admins: adminProcedure.query(async () => {
-      return getUsersByRole('admin');
+    loans: router({
+      list: adminProcedure.query(async () => {
+        return getAllLoanApplications();
+      }),
+
+      updateStatus: adminProcedure
+        .input(z.object({
+          loanId: z.number(),
+          status: z.string(),
+        }))
+        .mutation(async ({ input }) => {
+          await updateLoanApplicationStatus(input.loanId, input.status);
+          return { success: true };
+        }),
+
+      stats: adminProcedure.query(async () => {
+        return getLoanStats();
+      }),
     }),
 
-    deletedUsers: adminProcedure.query(async () => {
-      return getDeletedUsers();
-    }),
-
-    userDetail: adminProcedure
-      .input(z.object({ userId: z.number() }))
-      .query(async ({ input }) => {
-        try {
-          const allUsers = await getAllUsers();
-          const user = allUsers.find(u => u.id === input.userId);
-          if (!user) throw new TRPCError({ code: "NOT_FOUND" });
-          const [profile, document, loans] = await Promise.all([
-            getUserProfile(input.userId).catch(e => { console.error('[userDetail] profile error:', e); return null; }),
-            getIdDocument(input.userId).catch(e => { console.error('[userDetail] document error:', e); return null; }),
-            getLoanApplicationsByUser(input.userId).catch(e => { console.error('[userDetail] loans error:', e); return []; }),
-          ]);
-          return { user, profile, document, loans };
-        } catch (error) {
-          console.error('[userDetail] Error:', error);
-          throw error;
+    repayments: router({
+      list: adminProcedure.query(async () => {
+        const loans = await getAllLoanApplications();
+        const allRepayments = [];
+        for (const loan of loans) {
+          const repayments = await getRepaymentsByLoan(loan.id);
+          allRepayments.push(...repayments);
         }
+        return allRepayments;
       }),
 
-    allLoans: adminProcedure.query(async () => {
-      return getAllLoanApplications();
+      updateStatus: adminProcedure
+        .input(z.object({
+          repaymentId: z.number(),
+          status: z.enum(["pending", "completed", "overdue"]),
+        }))
+        .mutation(async ({ input }) => {
+          await updateRepayment(input.repaymentId, { status: input.status });
+          return { success: true };
+        }),
     }),
 
-    loanDetail: adminProcedure
-      .input(z.object({ loanId: z.number() }))
-      .query(async ({ input }) => {
-        const loan = await getLoanApplicationById(input.loanId);
-        if (!loan) throw new TRPCError({ code: "NOT_FOUND" });
-        const repaymentList = await getRepaymentsByLoan(input.loanId);
-        return { loan, repayments: repaymentList };
+    admins: router({
+      list: adminProcedure.query(async () => {
+        return getUsersByRole("admin");
       }),
 
-    updateLoanStatus: adminProcedure
-      .input(z.object({
-        loanId: z.number(),
-        status: z.enum(["待審核", "審核中", "已核准", "撥款中", "還款中", "已結清", "已拒絕"]),
-        adminNote: z.string().optional(),
-        interestRate: z.string().optional(),
-        approvedAmount: z.string().optional(),
-        approvedDurationMonths: z.number().int().min(1).max(360).optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        await updateLoanApplicationStatus(
-          input.loanId,
-          input.status,
-          ctx.user.id,
-          input.adminNote,
-          input.interestRate,
-          input.approvedAmount,
-          input.approvedDurationMonths
-        );
-        return { success: true };
-      }),
+      create: adminProcedure
+        .input(z.object({
+          phone: z.string().regex(/^09\d{8}$/, "請輸入正確的台灣手機號碼"),
+          password: z.string().min(6),
+          name: z.string().min(1).max(50),
+        }))
+        .mutation(async ({ input }) => {
+          const existing = await getUserByPhone(input.phone);
+          if (existing) {
+            throw new TRPCError({ code: "CONFLICT", message: "此手機號碼已被註冊" });
+          }
+          const passwordHash = await bcrypt.hash(input.password, 10);
+          const user = await createUserWithPhone(input.phone, passwordHash, input.name, 'limitdai');
+          if (!user) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "建立帳號失敗" });
+          await upsertUser({ id: user.id, role: "admin" });
+          return { success: true, user };
+        }),
 
-    updateDocumentStatus: adminProcedure
-      .input(z.object({
-        docId: z.number(),
-        status: z.enum(["pending", "reviewing", "verified", "rejected"]),
-        reviewNote: z.string().optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        await updateIdDocumentStatus(input.docId, input.status, ctx.user.id, input.reviewNote);
-        return { success: true };
-      }),
-
-    addRepayment: adminProcedure
-      .input(z.object({
-        loanId: z.number(),
-        dueDate: z.string(),
-        amountDue: z.string(),
-        amountPaid: z.string().optional(),
-        status: z.enum(["pending", "paid", "overdue", "partial"]).default("pending"),
-        notes: z.string().optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        await createRepayment({
-          loanId: input.loanId,
-          dueDate: new Date(input.dueDate),
-          amountDue: input.amountDue,
-          amountPaid: input.amountPaid ?? "0",
-          status: input.status,
-          paidAt: input.status === "paid" ? new Date() : undefined,
-          recordedBy: ctx.user.id,
-          notes: input.notes ?? null,
-        });
-        return { success: true };
-      }),
-
-    updateRepayment: adminProcedure
-      .input(z.object({
-        repaymentId: z.number(),
-        amountPaid: z.string().optional(),
-        status: z.enum(["pending", "paid", "overdue", "partial"]).optional(),
-        notes: z.string().optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        await updateRepayment(input.repaymentId, {
-          amountPaid: input.amountPaid,
-          status: input.status,
-          paidAt: input.status === "paid" ? new Date() : undefined,
-          notes: input.notes,
-          recordedBy: ctx.user.id,
-        });
-        return { success: true };
-      }),
-
-    setUserStatus: adminProcedure
-      .input(z.object({
-        userId: z.number(),
-        status: z.enum(['active', 'frozen']),
-      }))
-      .mutation(async ({ input }) => {
-        const allUsers = await getAllUsers();
-        const user = allUsers.find(u => u.id === input.userId);
-        if (!user) throw new TRPCError({ code: 'NOT_FOUND', message: '找不到該會員' });
-        await updateUserStatus(input.userId, input.status);
-        return { success: true };
-      }),
-
-    deleteUser: adminProcedure
-      .input(z.object({ userId: z.number() }))
-      .mutation(async ({ input }) => {
-        const allUsers = await getAllUsers();
-        const user = allUsers.find(u => u.id === input.userId);
-        if (!user) throw new TRPCError({ code: 'NOT_FOUND', message: '找不到該會員' });
-        if (user.role === 'admin') throw new TRPCError({ code: 'FORBIDDEN', message: '無法刪除管理員帳號' });
-        await deleteUser(input.userId);
-        return { success: true };
-      }),
-
-    resetUserPassword: adminProcedure
-      .input(z.object({
-        userId: z.number(),
-        newPassword: z.string().min(6).max(100),
-      }))
-      .mutation(async ({ input }) => {
-        const allUsers = await getAllUsers();
-        const user = allUsers.find(u => u.id === input.userId);
-        if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "找不到該會員" });
-        if (!user.phone) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "該會員不是電話密碼註冊的帳號" });
-        }
-        const newHash = await bcrypt.hash(input.newPassword, 10);
-        await upsertUser({ openId: user.openId, passwordHash: newHash });
-        return { success: true };
-      }),
+      delete: adminProcedure
+        .input(z.object({ userId: z.number() }))
+        .mutation(async ({ input }) => {
+          await deleteUser(input.userId);
+          return { success: true };
+        }),
+    }),
   }),
 });
 
