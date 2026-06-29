@@ -191,26 +191,33 @@ export const appRouter = router({
         mimeType: z.string().default("image/jpeg"),
       }))
       .mutation(async ({ ctx, input }) => {
-        const dataUrl = `data:${input.mimeType};base64,${input.base64}`;
+        // 將 Base64 轉換為 Buffer
+        const buffer = Buffer.from(input.base64, 'base64');
+        const key = `idDocuments/${ctx.user.id}/${input.side}-${Date.now()}`;
+        
+        // 上傳到 S3
+        const { storagePut } = await import('../storage');
+        const { url } = await storagePut(key, buffer, input.mimeType);
+        
         const existing = await getIdDocument(ctx.user.id);
         const updateData: InsertIdDocument = { userId: ctx.user.id };
         if (input.side === "front") {
-          updateData.frontImageKey = `db:${ctx.user.id}:front`;
-          updateData.frontImageUrl = dataUrl;
+          updateData.frontImageKey = key;
+          updateData.frontImageUrl = url;
           if (existing?.backImageKey) {
             updateData.backImageKey = existing.backImageKey;
             updateData.backImageUrl = existing.backImageUrl ?? "";
           }
         } else {
-          updateData.backImageKey = `db:${ctx.user.id}:back`;
-          updateData.backImageUrl = dataUrl;
+          updateData.backImageKey = key;
+          updateData.backImageUrl = url;
           if (existing?.frontImageKey) {
             updateData.frontImageKey = existing.frontImageKey;
             updateData.frontImageUrl = existing.frontImageUrl ?? "";
           }
         }
         await createOrUpdateIdDocument(updateData);
-        return { success: true, url: dataUrl };
+        return { success: true, url };
       }),
     uploadPassbook: protectedProcedure
       .input(z.object({
@@ -218,12 +225,19 @@ export const appRouter = router({
         mimeType: z.string().default("image/jpeg"),
       }))
       .mutation(async ({ ctx, input }) => {
-        const dataUrl = `data:${input.mimeType};base64,${input.base64}`;
+        // 將 Base64 轉換為 Buffer
+        const buffer = Buffer.from(input.base64, 'base64');
+        const key = `idDocuments/${ctx.user.id}/passbook-${Date.now()}`;
+        
+        // 上傳到 S3
+        const { storagePut } = await import('../storage');
+        const { url } = await storagePut(key, buffer, input.mimeType);
+        
         const existing = await getIdDocument(ctx.user.id);
         const updateData: InsertIdDocument = {
           userId: ctx.user.id,
-          passbookImageKey: `db:${ctx.user.id}:passbook`,
-          passbookImageUrl: dataUrl,
+          passbookImageKey: key,
+          passbookImageUrl: url,
         };
         if (existing?.frontImageKey) {
           updateData.frontImageKey = existing.frontImageKey;
@@ -234,7 +248,7 @@ export const appRouter = router({
           updateData.backImageUrl = existing.backImageUrl ?? "";
         }
         await createOrUpdateIdDocument(updateData);
-        return { success: true, url: dataUrl };
+        return { success: true, url };
       }),
 
     updateBankInfo: protectedProcedure
