@@ -10,6 +10,7 @@ import { notifyOwner } from "./_core/notification";
 import type { InsertIdDocument } from "../drizzle/schema";
 import bcrypt from "bcryptjs";
 import { notifyNewUser, notifyProfileUpdated, notifyDocumentUploaded, notifyLoanApplication } from "./email";
+import { storagePut } from "./storage";
 import {
   upsertUser,
   getUserByOpenId,
@@ -196,7 +197,6 @@ export const appRouter = router({
         const key = `idDocuments/${ctx.user.id}/${input.side}-${Date.now()}`;
         
         // 上傳到 S3
-        const { storagePut } = await import('../storage');
         const { url } = await storagePut(key, buffer, input.mimeType);
         
         const existing = await getIdDocument(ctx.user.id);
@@ -230,7 +230,6 @@ export const appRouter = router({
         const key = `idDocuments/${ctx.user.id}/passbook-${Date.now()}`;
         
         // 上傳到 S3
-        const { storagePut } = await import('../storage');
         const { url } = await storagePut(key, buffer, input.mimeType);
         
         const existing = await getIdDocument(ctx.user.id);
