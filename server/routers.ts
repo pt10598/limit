@@ -1,4 +1,4 @@
-// routers.ts 或 appRouter.ts
+// server/routers.ts
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME } from "@shared/const";
@@ -51,10 +51,10 @@ export const appRouter = router({
       .input(z.object({
         phone: z.string().regex(/^09\d{8}$/, "請輸入正確的台灣手機號碼（09 開頭，共 10 碼）"),
         password: z.string().min(6).max(100),
-        name: z.string().min(1).max(50).optional(),
+        name: z.string().min(0).max(50).optional().default(''), // ✅ 修改：允許空字串
       }))
       .mutation(async ({ ctx, input }) => {
-        // ✅ 除錯 Log - 印出收到的資料
+        // ✅ 除錯 Log
         console.log('[Register] 收到的輸入:', JSON.stringify(input, null, 2));
         console.log('[Register] 手機格式檢查:', /^09\d{8}$/.test(input.phone));
         
@@ -70,7 +70,7 @@ export const appRouter = router({
           const passwordHash = await bcrypt.hash(input.password, 10);
           
           // 建立用戶
-          const user = await createUserWithPhone(input.phone, passwordHash, input.name, 'limitdai');
+          const user = await createUserWithPhone(input.phone, passwordHash, input.name || undefined, 'limitdai');
           if (!user) {
             console.error('[Register] 建立用戶失敗');
             throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "建立帳號失敗" });
@@ -101,7 +101,6 @@ export const appRouter = router({
             } 
           };
         } catch (error) {
-          // ✅ 除錯 Log - 印出錯誤
           console.error('[Register] 錯誤:', error);
           throw error;
         }
@@ -114,11 +113,9 @@ export const appRouter = router({
         isAdmin: z.boolean().optional().default(false),
       }))
       .mutation(async ({ ctx, input }) => {
-        // ✅ 除錯 Log - 印出收到的資料
         console.log('[Login] 收到的輸入:', JSON.stringify(input, null, 2));
         
         try {
-          // 一般會員登入需驗證手機號碼格式
           if (!input.isAdmin && !/^09\d{8}$/.test(input.phone)) {
             throw new TRPCError({ code: "BAD_REQUEST", message: "請輸入正確的台灣手機號碼（09 開頭，共 10 碼）" });
           }
@@ -133,16 +130,13 @@ export const appRouter = router({
             throw new TRPCError({ code: "UNAUTHORIZED", message: "手機號碼或密碼錯誤" });
           }
           
-          // 檢查帳號是否被凍結
           if (user.status === 'frozen') {
             throw new TRPCError({ code: "FORBIDDEN", message: "此帳號已被凍結，請聯繫客服" });
           }
           
-          // 記錄登入 IP
           const ip = (ctx.req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || ctx.req.socket?.remoteAddress || '';
           await updateUserLastLoginIp(user.id, ip);
           
-          // 建立 session
           const token = await sdk.createSessionToken(user.openId, { name: user.name ?? "" });
           const cookieOptions = getSessionCookieOptions(ctx.req);
           ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: 365 * 24 * 60 * 60 * 1000 });
@@ -222,7 +216,6 @@ export const appRouter = router({
           profileCompleted: "complete",
         });
         
-        // 發送 Email 通知管理員
         try {
           const userObj = await getUserById(ctx.user.id);
           await notifyProfileUpdated(userObj?.phone ?? '', input.fullName);
@@ -398,7 +391,6 @@ export const appRouter = router({
           status: "待審核",
         });
 
-        // Email 通知管理員
         try {
           const userObj = await getUserById(ctx.user.id);
           await notifyLoanApplication(userObj?.phone ?? '', Number(input.loanAmount), input.purpose);
@@ -406,8 +398,8 @@ export const appRouter = router({
           console.warn('[Loan] Email 通知失敗:', e); 
         }
         
-        // Manus 通知管理員
         try {
+          const userObj = await getUserById(ctx.user.id);
           await notifyOwner({
             title: "新借款申請",
             content: `用戶 ${userObj?.phone} 申請借款 ${input.loanAmount} 元，用途：${input.purpose}`,
