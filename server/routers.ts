@@ -43,7 +43,6 @@ export const appRouter = router({
   system: systemRouter,
 
   auth: router({
-    // ✅ me 現在安全了 - 沒有 session 就回傳 null
     me: publicProcedure.query(({ ctx }) => {
       return ctx.user || null;
     }),
@@ -55,40 +54,57 @@ export const appRouter = router({
         name: z.string().min(1).max(50).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        // 檢查手機號碼是否已註冊
-        const existing = await getUserByPhone(input.phone);
-        if (existing) {
-          throw new TRPCError({ code: "CONFLICT", message: "此手機號碼已被註冊" });
-        }
+        // ✅ 除錯 Log - 印出收到的資料
+        console.log('[Register] 收到的輸入:', JSON.stringify(input, null, 2));
+        console.log('[Register] 手機格式檢查:', /^09\d{8}$/.test(input.phone));
         
-        // 雜湊密碼
-        const passwordHash = await bcrypt.hash(input.password, 10);
-        
-        // 建立用戶
-        const user = await createUserWithPhone(input.phone, passwordHash, input.name, 'limitdai');
-        if (!user) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "建立帳號失敗" });
-        
-        // 建立 session
-        const token = await sdk.createSessionToken(user.openId, { name: user.name ?? "" });
-        const cookieOptions = getSessionCookieOptions(ctx.req);
-        ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: 365 * 24 * 60 * 60 * 1000 });
-        
-        // 發送 Email 通知管理員
         try {
-          await notifyNewUser(input.phone);
-        } catch (e) { 
-          console.warn('[Email] notifyNewUser failed:', e); 
+          // 檢查手機號碼是否已註冊
+          const existing = await getUserByPhone(input.phone);
+          if (existing) {
+            console.log('[Register] 手機號碼已存在:', input.phone);
+            throw new TRPCError({ code: "CONFLICT", message: "此手機號碼已被註冊" });
+          }
+          
+          // 雜湊密碼
+          const passwordHash = await bcrypt.hash(input.password, 10);
+          
+          // 建立用戶
+          const user = await createUserWithPhone(input.phone, passwordHash, input.name, 'limitdai');
+          if (!user) {
+            console.error('[Register] 建立用戶失敗');
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "建立帳號失敗" });
+          }
+          
+          console.log('[Register] 用戶建立成功:', user.id);
+          
+          // 建立 session
+          const token = await sdk.createSessionToken(user.openId, { name: user.name ?? "" });
+          const cookieOptions = getSessionCookieOptions(ctx.req);
+          ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: 365 * 24 * 60 * 60 * 1000 });
+          
+          // 發送 Email 通知管理員
+          try {
+            await notifyNewUser(input.phone);
+          } catch (e) { 
+            console.warn('[Register] Email 通知失敗:', e); 
+          }
+          
+          console.log('[Register] 註冊流程完成');
+          return { 
+            success: true, 
+            user: { 
+              id: user.id, 
+              phone: user.phone, 
+              name: user.name, 
+              role: user.role 
+            } 
+          };
+        } catch (error) {
+          // ✅ 除錯 Log - 印出錯誤
+          console.error('[Register] 錯誤:', error);
+          throw error;
         }
-        
-        return { 
-          success: true, 
-          user: { 
-            id: user.id, 
-            phone: user.phone, 
-            name: user.name, 
-            role: user.role 
-          } 
-        };
       }),
 
     login: publicProcedure
@@ -98,44 +114,53 @@ export const appRouter = router({
         isAdmin: z.boolean().optional().default(false),
       }))
       .mutation(async ({ ctx, input }) => {
-        // 一般會員登入需驗證手機號碼格式
-        if (!input.isAdmin && !/^09\d{8}$/.test(input.phone)) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "請輸入正確的台灣手機號碼（09 開頭，共 10 碼）" });
+        // ✅ 除錯 Log - 印出收到的資料
+        console.log('[Login] 收到的輸入:', JSON.stringify(input, null, 2));
+        
+        try {
+          // 一般會員登入需驗證手機號碼格式
+          if (!input.isAdmin && !/^09\d{8}$/.test(input.phone)) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "請輸入正確的台灣手機號碼（09 開頭，共 10 碼）" });
+          }
+          
+          const user = await getUserByPhone(input.phone);
+          if (!user || !user.passwordHash) {
+            throw new TRPCError({ code: "UNAUTHORIZED", message: "帳號或密碼錯誤" });
+          }
+          
+          const valid = await bcrypt.compare(input.password, user.passwordHash);
+          if (!valid) {
+            throw new TRPCError({ code: "UNAUTHORIZED", message: "手機號碼或密碼錯誤" });
+          }
+          
+          // 檢查帳號是否被凍結
+          if (user.status === 'frozen') {
+            throw new TRPCError({ code: "FORBIDDEN", message: "此帳號已被凍結，請聯繫客服" });
+          }
+          
+          // 記錄登入 IP
+          const ip = (ctx.req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || ctx.req.socket?.remoteAddress || '';
+          await updateUserLastLoginIp(user.id, ip);
+          
+          // 建立 session
+          const token = await sdk.createSessionToken(user.openId, { name: user.name ?? "" });
+          const cookieOptions = getSessionCookieOptions(ctx.req);
+          ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: 365 * 24 * 60 * 60 * 1000 });
+          
+          console.log('[Login] 登入成功:', user.id);
+          return { 
+            success: true, 
+            user: { 
+              id: user.id, 
+              phone: user.phone, 
+              name: user.name, 
+              role: user.role 
+            } 
+          };
+        } catch (error) {
+          console.error('[Login] 錯誤:', error);
+          throw error;
         }
-        
-        const user = await getUserByPhone(input.phone);
-        if (!user || !user.passwordHash) {
-          throw new TRPCError({ code: "UNAUTHORIZED", message: "帳號或密碼錯誤" });
-        }
-        
-        const valid = await bcrypt.compare(input.password, user.passwordHash);
-        if (!valid) {
-          throw new TRPCError({ code: "UNAUTHORIZED", message: "手機號碼或密碼錯誤" });
-        }
-        
-        // 檢查帳號是否被凍結
-        if (user.status === 'frozen') {
-          throw new TRPCError({ code: "FORBIDDEN", message: "此帳號已被凍結，請聯繫客服" });
-        }
-        
-        // 記錄登入 IP
-        const ip = (ctx.req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || ctx.req.socket?.remoteAddress || '';
-        await updateUserLastLoginIp(user.id, ip);
-        
-        // 建立 session
-        const token = await sdk.createSessionToken(user.openId, { name: user.name ?? "" });
-        const cookieOptions = getSessionCookieOptions(ctx.req);
-        ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: 365 * 24 * 60 * 60 * 1000 });
-        
-        return { 
-          success: true, 
-          user: { 
-            id: user.id, 
-            phone: user.phone, 
-            name: user.name, 
-            role: user.role 
-          } 
-        };
       }),
 
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -202,7 +227,7 @@ export const appRouter = router({
           const userObj = await getUserById(ctx.user.id);
           await notifyProfileUpdated(userObj?.phone ?? '', input.fullName);
         } catch (e) { 
-          console.warn('[Email] notifyProfileUpdated failed:', e); 
+          console.warn('[Profile] Email 通知失敗:', e); 
         }
         
         return { success: true };
@@ -378,7 +403,7 @@ export const appRouter = router({
           const userObj = await getUserById(ctx.user.id);
           await notifyLoanApplication(userObj?.phone ?? '', Number(input.loanAmount), input.purpose);
         } catch (e) { 
-          console.warn('[Email] notify failed:', e); 
+          console.warn('[Loan] Email 通知失敗:', e); 
         }
         
         // Manus 通知管理員
@@ -388,7 +413,7 @@ export const appRouter = router({
             content: `用戶 ${userObj?.phone} 申請借款 ${input.loanAmount} 元，用途：${input.purpose}`,
           });
         } catch (e) { 
-          console.warn('[Manus] notifyOwner failed:', e); 
+          console.warn('[Loan] Manus 通知失敗:', e); 
         }
         
         return { success: true };
