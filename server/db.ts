@@ -105,13 +105,13 @@ export async function createUserWithPhone(phone: string, passwordHash: string, n
   await db.insert(users).values({
     openId,
     phone,
+    source_domain: source_domain ?? 'limitdai',
     passwordHash,
     name: name ?? null,
     email: null,
     loginMethod: "phone",
     role: "user",
     lastSignedIn: new Date(),
-    source_domain: source_domain ?? 'limitdai',
   });
   const result = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
   return result[0];
