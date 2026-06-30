@@ -24,7 +24,7 @@ async function sendNotification(subject: string, html: string) {
 
 export async function notifyNewUser(phone: string) {
   await sendNotification(
-    "【極限貸】新會員註冊通知",
+    "【閃電貸】新會員註冊通知",
     `
     <div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
       <h2 style="color:#1e40af;">新會員註冊通知</h2>
@@ -35,7 +35,7 @@ export async function notifyNewUser(phone: string) {
         <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;">時間</td>
             <td style="padding:8px;border:1px solid #e5e7eb;">${new Date().toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}</td></tr>
       </table>
-      <p style="margin-top:16px;"><a href="https://jixiandai.herokuapp.com/adminmanagebackstage/users" style="background:#1e40af;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;">前往後台查看</a></p>
+      <p style="margin-top:16px;"><a href="https://flashdai-aae76ae91c17.herokuapp.com/adminmanagebackstage/users" style="background:#1e40af;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;">前往後台查看</a></p>
     </div>
     `
   );
@@ -43,7 +43,7 @@ export async function notifyNewUser(phone: string) {
 
 export async function notifyProfileUpdated(phone: string, name: string) {
   await sendNotification(
-    "【極限貸】會員完成個人資料填寫",
+    "【閃電貸】會員完成個人資料填寫",
     `
     <div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
       <h2 style="color:#1e40af;">會員個人資料更新通知</h2>
@@ -56,7 +56,7 @@ export async function notifyProfileUpdated(phone: string, name: string) {
         <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;">時間</td>
             <td style="padding:8px;border:1px solid #e5e7eb;">${new Date().toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}</td></tr>
       </table>
-      <p style="margin-top:16px;"><a href="https://jixiandai.herokuapp.com/adminmanagebackstage/users" style="background:#1e40af;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;">前往後台查看</a></p>
+      <p style="margin-top:16px;"><a href="https://flashdai-aae76ae91c17.herokuapp.com/adminmanagebackstage/users" style="background:#1e40af;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;">前往後台查看</a></p>
     </div>
     `
   );
@@ -69,7 +69,7 @@ export async function notifyDocumentUploaded(phone: string, docType: string) {
     passbook: "銀行存摺封面",
   };
   await sendNotification(
-    "【極限貸】會員上傳證件通知",
+    "【閃電貸】會員上傳證件通知",
     `
     <div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
       <h2 style="color:#1e40af;">會員上傳證件通知</h2>
@@ -82,7 +82,7 @@ export async function notifyDocumentUploaded(phone: string, docType: string) {
         <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;">時間</td>
             <td style="padding:8px;border:1px solid #e5e7eb;">${new Date().toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}</td></tr>
       </table>
-      <p style="margin-top:16px;"><a href="https://jixiandai.herokuapp.com/adminmanagebackstage/users" style="background:#1e40af;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;">前往後台查看</a></p>
+      <p style="margin-top:16px;"><a href="https://flashdai-aae76ae91c17.herokuapp.com/adminmanagebackstage/users" style="background:#1e40af;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;">前往後台查看</a></p>
     </div>
     `
   );
@@ -90,7 +90,7 @@ export async function notifyDocumentUploaded(phone: string, docType: string) {
 
 export async function notifyLoanApplication(phone: string, amount: number, purpose: string) {
   await sendNotification(
-    `【極限貸】新借款申請 NT$ ${amount.toLocaleString()}`,
+    `【閃電貸】新借款申請 NT$ ${amount.toLocaleString()}`,
     `
     <div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
       <h2 style="color:#1e40af;">新借款申請通知</h2>
@@ -105,7 +105,7 @@ export async function notifyLoanApplication(phone: string, amount: number, purpo
         <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;">時間</td>
             <td style="padding:8px;border:1px solid #e5e7eb;">${new Date().toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}</td></tr>
       </table>
-      <p style="margin-top:16px;"><a href="https://jixiandai.herokuapp.com/adminmanagebackstage/loans" style="background:#1e40af;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;">前往後台審核</a></p>
+      <p style="margin-top:16px;"><a href="https://flashdai-aae76ae91c17.herokuapp.com/adminmanagebackstage/loans" style="background:#1e40af;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;">前往後台審核</a></p>
     </div>
     `
   );

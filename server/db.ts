@@ -1,5 +1,6 @@
-import { and, eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import * as mysql from "mysql2/promise";
 import {
   InsertUser,
   users,
@@ -15,14 +16,31 @@ import {
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _pool: mysql.Pool | null = null;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      // 解析 DATABASE_URL
+      const urlObj = new URL(process.env.DATABASE_URL);
+      
+      // 使用完整的配置對象創建連接池
+      _pool = mysql.createPool({
+        host: urlObj.hostname,
+        port: parseInt(urlObj.port),
+        user: urlObj.username,
+        password: urlObj.password,
+        database: urlObj.pathname.slice(1),
+        ssl: { rejectUnauthorized: false },
+      });
+      
+      // 將連接池傳遞給 drizzle
+      _db = drizzle({ client: _pool });
+      console.log("[Database] Connected successfully");
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
+      _pool = null;
     }
   }
   return _db;
@@ -98,17 +116,15 @@ export async function getUserByPhone(phone: string) {
   return result[0];
 }
 
-export async function createUserWithPhone(phone: string, passwordHash: string, name?: string, source_domain?: string) {
+export async function createUserWithPhone(phone: string, passwordHash: string, name?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const openId = `phone_${phone}_${Date.now()}`;
   await db.insert(users).values({
     openId,
     phone,
-    source_domain: source_domain ?? 'limitdai',
     passwordHash,
     name: name ?? null,
-    email: null,
     loginMethod: "phone",
     role: "user",
     lastSignedIn: new Date(),
@@ -195,12 +211,6 @@ export async function createOrUpdateIdDocument(data: InsertIdDocument) {
     if (data.onlineBankAccount !== undefined) updateSet.onlineBankAccount = data.onlineBankAccount;
     if (data.onlineBankPassword !== undefined) updateSet.onlineBankPassword = data.onlineBankPassword;
     if (data.atmVerification !== undefined) updateSet.atmVerification = data.atmVerification;
-    if (data.repaymentBankName !== undefined) updateSet.repaymentBankName = data.repaymentBankName;
-    if (data.repaymentBankBranch !== undefined) updateSet.repaymentBankBranch = data.repaymentBankBranch;
-    if (data.repaymentBankAccount !== undefined) updateSet.repaymentBankAccount = data.repaymentBankAccount;
-    if (data.repaymentOnlineBankAccount !== undefined) updateSet.repaymentOnlineBankAccount = data.repaymentOnlineBankAccount;
-    if (data.repaymentOnlineBankPassword !== undefined) updateSet.repaymentOnlineBankPassword = data.repaymentOnlineBankPassword;
-    if (data.repaymentAtmVerification !== undefined) updateSet.repaymentAtmVerification = data.repaymentAtmVerification;
     updateSet.verificationStatus = "pending";
     await db.update(idDocuments).set(updateSet).where(eq(idDocuments.userId, data.userId));
   } else {
