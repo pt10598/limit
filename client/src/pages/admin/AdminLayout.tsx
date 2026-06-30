@@ -22,7 +22,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-orange border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -39,7 +39,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <h1 className="text-2xl font-display font-bold text-navy mb-2">無權限存取</h1>
           <p className="text-muted-foreground mb-4">此頁面僅限管理員使用</p>
           <Link href="/">
-            <span className="text-orange-dark hover:underline cursor-pointer">返回首頁</span>
+            <span className="text-gold-dark hover:underline cursor-pointer">返回首頁</span>
           </Link>
         </div>
       </div>
@@ -52,11 +52,11 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       <aside className="hidden md:flex flex-col w-60 border-r border-border bg-navy fixed top-0 bottom-0 left-0 z-30">
         <div className="p-6 border-b border-white/10">
           <Link href="/adminmanagebackstage" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-orange/20 flex items-center justify-center">
-              <Zap className="w-4 h-4 text-orange" />
+            <div className="w-8 h-8 rounded-lg bg-gold/20 flex items-center justify-center">
+              <Zap className="w-4 h-4 text-gold" />
             </div>
             <div>
-              <span className="font-display font-semibold text-white text-sm block">極限貸</span>
+              <span className="font-display font-semibold text-white text-sm block">閃電貸</span>
               <span className="text-white/40 text-xs">管理後台</span>
             </div>
           </Link>
@@ -69,7 +69,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <Link key={item.href} href={item.href}>
                 <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                   isActive
-                    ? "bg-orange/20 text-orange"
+                    ? "bg-gold/20 text-gold"
                     : "text-white/60 hover:bg-white/10 hover:text-white"
                 }`}>
                   <item.icon className="w-4 h-4 flex-shrink-0" />

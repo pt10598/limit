@@ -93,7 +93,7 @@ function LoanCard({ loan }: { loan: any }) {
         {loan.interestRate && (
           <div className="mt-3 flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">核准利率：</span>
-            <span className="font-semibold text-orange-dark">{loan.interestRate}%</span>
+            <span className="font-semibold text-gold-dark">{loan.interestRate}%</span>
           </div>
         )}
 
@@ -109,7 +109,7 @@ function LoanCard({ loan }: { loan: any }) {
           </span>
           <button
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1 text-xs text-navy hover:text-orange-dark transition-colors"
+            className="flex items-center gap-1 text-xs text-navy hover:text-gold-dark transition-colors"
           >
             {expanded ? "收起" : "還款明細"}
             {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}

@@ -80,7 +80,7 @@ export default function AdminRepayments() {
                     ・用途：{loan.purpose}
                   </div>
                   {loan.interestRate && (
-                    <div className="text-xs text-orange-dark mt-1">
+                    <div className="text-xs text-gold-dark mt-1">
                       利率：{loan.interestRate}%
                     </div>
                   )}

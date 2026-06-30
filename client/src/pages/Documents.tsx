@@ -88,10 +88,10 @@ function UploadCard({
         ) : (
           <button
             onClick={() => inputRef.current?.click()}
-            className="w-full aspect-[16/9] rounded-xl border-2 border-dashed border-border hover:border-orange/50 bg-secondary/40 hover:bg-orange/5 transition-all flex flex-col items-center justify-center gap-3 group"
+            className="w-full aspect-[16/9] rounded-xl border-2 border-dashed border-border hover:border-gold/50 bg-secondary/40 hover:bg-gold/5 transition-all flex flex-col items-center justify-center gap-3 group"
           >
-            <div className="w-12 h-12 rounded-xl bg-white border border-border flex items-center justify-center group-hover:border-orange/30 transition-colors">
-              <FileImage className="w-6 h-6 text-muted-foreground group-hover:text-orange-dark transition-colors" />
+            <div className="w-12 h-12 rounded-xl bg-white border border-border flex items-center justify-center group-hover:border-gold/30 transition-colors">
+              <FileImage className="w-6 h-6 text-muted-foreground group-hover:text-gold-dark transition-colors" />
             </div>
             <div className="text-center">
               <p className="text-sm font-medium text-foreground">點擊上傳圖片</p>
@@ -382,7 +382,7 @@ export default function DocumentsPage() {
         {/* Instructions */}
         <div className="card-elegant p-5">
           <div className="flex items-start gap-3">
-            <ShieldCheck className="w-5 h-5 text-orange-dark flex-shrink-0 mt-0.5" />
+            <ShieldCheck className="w-5 h-5 text-gold-dark flex-shrink-0 mt-0.5" />
             <div>
               <h3 className="text-sm font-semibold text-navy mb-2">上傳注意事項</h3>
               <ul className="text-xs text-muted-foreground space-y-1.5">

@@ -66,7 +66,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between p-5 border-b border-border">
             <h2 className="font-display font-semibold text-navy">最新借款申請</h2>
             <Link href="/admin/loans">
-              <span className="text-sm text-orange-dark hover:text-orange cursor-pointer flex items-center gap-1">
+              <span className="text-sm text-gold-dark hover:text-gold cursor-pointer flex items-center gap-1">
                 查看全部 <ArrowRight className="w-3.5 h-3.5" />
               </span>
             </Link>
@@ -92,7 +92,7 @@ export default function AdminDashboard() {
                       {loan.status}
                     </span>
                     <Link href={`/admin/loans/${loan.id}`}>
-                      <span className="text-xs text-navy hover:text-orange-dark cursor-pointer">審核</span>
+                      <span className="text-xs text-navy hover:text-gold-dark cursor-pointer">審核</span>
                     </Link>
                   </div>
                 </div>

@@ -212,11 +212,11 @@ export default function ApplyPage() {
 
           {/* Estimate */}
           {monthlyPayment && (
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-orange/10 border border-orange/20">
-              <Calculator className="w-5 h-5 text-orange-dark flex-shrink-0" />
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-gold/10 border border-gold/20">
+              <Calculator className="w-5 h-5 text-gold-dark flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-navy">預估每月還款金額</p>
-                <p className="text-xl font-display font-bold text-orange-dark mt-0.5">
+                <p className="text-xl font-display font-bold text-gold-dark mt-0.5">
                   NT$ {monthlyPayment.toLocaleString()}
                   {watchMethod === "bullet" && <span className="text-sm font-normal text-muted-foreground ml-1">（利息）</span>}
                 </p>

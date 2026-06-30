@@ -68,7 +68,7 @@ export default function AdminAdmins() {
                       <tr key={admin.id} className="hover:bg-secondary/30 transition-colors">
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-2">
-                            <ShieldCheck className="w-4 h-4 text-orange" />
+                            <ShieldCheck className="w-4 h-4 text-gold" />
                             <span className="font-medium font-mono">{admin.phone}</span>
                           </div>
                         </td>

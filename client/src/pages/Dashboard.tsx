@@ -35,9 +35,9 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
       <div className="p-6 border-b border-border">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
-            <Zap className="w-4 h-4 text-orange" />
+            <Zap className="w-4 h-4 text-gold" />
           </div>
-          <span className="font-display font-semibold text-navy">極限貸</span>
+          <span className="font-display font-semibold text-navy">閃電貸</span>
         </Link>
       </div>
 
@@ -81,7 +81,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-orange border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -153,7 +153,7 @@ export default function DashboardHome() {
               <h2 className="font-display font-semibold text-navy">帳戶完整度</h2>
               <p className="text-sm text-muted-foreground mt-0.5">完成以下步驟以提交借款申請</p>
             </div>
-            <div className="text-3xl font-display font-bold text-orange-dark">{completionPct}%</div>
+            <div className="text-3xl font-display font-bold text-gold-dark">{completionPct}%</div>
           </div>
 
           {/* Progress bar */}
@@ -192,7 +192,7 @@ export default function DashboardHome() {
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-display font-semibold text-navy">最近申請</h2>
             <Link href="/dashboard/loans">
-              <span className="text-sm text-orange-dark hover:text-orange cursor-pointer">查看全部</span>
+              <span className="text-sm text-gold-dark hover:text-gold cursor-pointer">查看全部</span>
             </Link>
           </div>
 

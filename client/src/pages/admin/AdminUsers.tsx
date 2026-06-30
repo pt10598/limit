@@ -73,7 +73,7 @@ function UserDetailModal({ userId, onClose }: { userId: number; onClose: () => v
     return (
       <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
         <div className="bg-white rounded-2xl p-8">
-          <div className="w-8 h-8 border-2 border-orange border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
       </div>
     );

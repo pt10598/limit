@@ -11,8 +11,8 @@ function PrivacyModal({ onClose }: { onClose: () => void }) {
       <div className="relative bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] flex flex-col shadow-2xl">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-[#FF6B35]" />
-            <h2 className="text-base font-bold text-[#1a2744]">個人資料使用同意說明</h2>
+            <Shield className="w-5 h-5 text-[#1a3a6b]" />
+            <h2 className="text-base font-bold text-[#1a3a6b]">個人資料使用同意說明</h2>
           </div>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
             <X className="w-4 h-4 text-gray-500" />
@@ -22,8 +22,8 @@ function PrivacyModal({ onClose }: { onClose: () => void }) {
           <p className="text-xs text-gray-500">最後更新日期：2024 年 1 月 1 日</p>
 
           <section>
-            <h3 className="font-semibold text-[#1a2744] mb-1">一、蒐集目的</h3>
-            <p className="text-xs leading-relaxed text-gray-600">極限貸平台（以下稱「本平台」）依據《個人資料保護法》相關規定，於您申請借款、完成身份驗證及使用本平台服務時，蒐集必要之個人資料，用於以下目的：</p>
+            <h3 className="font-semibold text-[#1a3a6b] mb-1">一、蒐集目的</h3>
+            <p className="text-xs leading-relaxed text-gray-600">閃電貸平台（以下稱「本平台」）依據《個人資料保護法》相關規定，於您申請借款、完成身份驗證及使用本平台服務時，蒐集必要之個人資料，用於以下目的：</p>
             <ul className="text-xs text-gray-600 mt-1.5 space-y-1 list-disc list-inside">
               <li>身份驗證及信用審核</li>
               <li>借款申請審查及撥款作業</li>
@@ -34,7 +34,7 @@ function PrivacyModal({ onClose }: { onClose: () => void }) {
           </section>
 
           <section>
-            <h3 className="font-semibold text-[#1a2744] mb-1">二、蒐集項目</h3>
+            <h3 className="font-semibold text-[#1a3a6b] mb-1">二、蒐集項目</h3>
             <p className="text-xs leading-relaxed text-gray-600">本平台蒐集之個人資料包括但不限於：</p>
             <ul className="text-xs text-gray-600 mt-1.5 space-y-1 list-disc list-inside">
               <li>基本資料：姓名、身分證字號、出生年月日、聯絡電話、通訊地址</li>
@@ -45,7 +45,7 @@ function PrivacyModal({ onClose }: { onClose: () => void }) {
           </section>
 
           <section>
-            <h3 className="font-semibold text-[#1a2744] mb-1">三、資料保護措施</h3>
+            <h3 className="font-semibold text-[#1a3a6b] mb-1">三、資料保護措施</h3>
             <p className="text-xs leading-relaxed text-gray-600">本平台採取以下措施保護您的個人資料：</p>
             <ul className="text-xs text-gray-600 mt-1.5 space-y-1 list-disc list-inside">
               <li>所有資料傳輸採用 SSL/TLS 加密</li>
@@ -56,7 +56,7 @@ function PrivacyModal({ onClose }: { onClose: () => void }) {
           </section>
 
           <section>
-            <h3 className="font-semibold text-[#1a2744] mb-1">四、資料利用期間及範圍</h3>
+            <h3 className="font-semibold text-[#1a3a6b] mb-1">四、資料利用期間及範圍</h3>
             <p className="text-xs leading-relaxed text-gray-600">您的個人資料將於借款合約存續期間及法律規定之保存期限內保留。本平台不會將您的個人資料出售、出租或以其他方式提供予無關之第三方，但以下情形除外：</p>
             <ul className="text-xs text-gray-600 mt-1.5 space-y-1 list-disc list-inside">
               <li>依法令規定或主管機關要求</li>
@@ -66,7 +66,7 @@ function PrivacyModal({ onClose }: { onClose: () => void }) {
           </section>
 
           <section>
-            <h3 className="font-semibold text-[#1a2744] mb-1">五、您的權利</h3>
+            <h3 className="font-semibold text-[#1a3a6b] mb-1">五、您的權利</h3>
             <p className="text-xs leading-relaxed text-gray-600">依《個人資料保護法》第三條，您得就本平台保有之個人資料行使以下權利：</p>
             <ul className="text-xs text-gray-600 mt-1.5 space-y-1 list-disc list-inside">
               <li>查詢或請求閱覽</li>
@@ -78,14 +78,14 @@ function PrivacyModal({ onClose }: { onClose: () => void }) {
           </section>
 
           <section>
-            <h3 className="font-semibold text-[#1a2744] mb-1">六、聯絡方式</h3>
+            <h3 className="font-semibold text-[#1a3a6b] mb-1">六、聯絡方式</h3>
             <p className="text-xs leading-relaxed text-gray-600">如對本個資使用說明有任何疑問，或欲行使上述權利，請透過本平台客服管道與我們聯繫。</p>
           </section>
         </div>
         <div className="px-5 py-4 border-t border-gray-100">
           <button
             onClick={onClose}
-            className="w-full py-3 rounded-xl bg-[#FF6B35] text-white text-sm font-semibold active:scale-[0.98] transition-transform"
+            className="w-full py-3 rounded-xl bg-[#1a3a6b] text-white text-sm font-semibold active:scale-[0.98] transition-transform"
           >
             我已閱讀並了解
           </button>
@@ -112,27 +112,27 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col" style={{ fontFamily: "'Noto Sans TC', sans-serif" }}>
+    <div className="min-h-screen bg-[#1a3a6b] flex flex-col" style={{ fontFamily: "'Noto Sans TC', sans-serif" }}>
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-5 pt-6 pb-2 bg-white border-b border-gray-100 shadow-sm">
+      <div className="flex items-center justify-between px-5 pt-6 pb-2">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#FF6B35] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
             <Zap className="w-4 h-4 text-white" />
           </div>
-          <span className="text-[#1a2744] font-bold text-lg tracking-wide">極限貸</span>
+          <span className="text-white font-bold text-lg tracking-wide">閃電貸</span>
         </div>
         {!loading && !isAuthenticated && (
           <a
             href={getLoginUrl()}
-            className="text-sm text-gray-500 hover:text-[#FF6B35] transition-colors"
+            className="text-sm text-white/80 hover:text-white transition-colors"
           >
             登入 / 註冊
           </a>
         )}
         {!loading && isAuthenticated && (
           <Link href="/dashboard">
-            <span className="text-sm text-gray-500 hover:text-[#FF6B35] transition-colors cursor-pointer">
+            <span className="text-sm text-white/80 hover:text-white transition-colors cursor-pointer">
               會員中心
             </span>
           </Link>
@@ -140,32 +140,32 @@ export default function Home() {
       </div>
 
       {/* Hero card */}
-      <div className="mx-4 mt-4 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#e85a24] p-5 shadow-xl">
+      <div className="mx-4 mt-4 rounded-2xl bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] p-5 shadow-xl">
         <div className="flex items-start justify-between mb-1">
           <div>
-            <p className="text-white/80 text-xs mb-1">可申請額度（NT$）</p>
+            <p className="text-white/70 text-xs mb-1">可申請額度（NT$）</p>
             <p className="text-white text-3xl font-bold tracking-tight">3萬 - 100萬</p>
           </div>
           <div className="text-right">
-            <p className="text-white/80 text-xs mb-1">最低日利率</p>
+            <p className="text-white/70 text-xs mb-1">最低日利率</p>
             <p className="text-white text-lg font-bold">0.03%<span className="text-sm font-normal">/天</span></p>
           </div>
         </div>
-        <p className="text-white/70 text-xs mt-2">突破極限，快速到帳</p>
+        <p className="text-white/60 text-xs mt-2">降低借款門檻，簡化借款手續</p>
 
         <div className="flex gap-4 mt-4">
           <div>
-            <p className="text-white/70 text-xs">最長借款期數</p>
+            <p className="text-white/60 text-xs">最長借款期數</p>
             <p className="text-white font-semibold text-sm">6 - 120 期</p>
           </div>
-          <div className="w-px bg-white/30" />
+          <div className="w-px bg-white/20" />
           <div>
-            <p className="text-white/70 text-xs">審核時間</p>
+            <p className="text-white/60 text-xs">審核時間</p>
             <p className="text-white font-semibold text-sm">最快 24 小時</p>
           </div>
-          <div className="w-px bg-white/30" />
+          <div className="w-px bg-white/20" />
           <div>
-            <p className="text-white/70 text-xs">通過率</p>
+            <p className="text-white/60 text-xs">通過率</p>
             <p className="text-white font-semibold text-sm">98.2%</p>
           </div>
         </div>
@@ -173,7 +173,7 @@ export default function Home() {
 
       {/* Amount selection */}
       <div className="mx-4 mt-5">
-        <p className="text-gray-600 text-sm mb-3 font-medium">選擇借款金額</p>
+        <p className="text-white/80 text-sm mb-3 font-medium">選擇借款金額</p>
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
           {LOAN_AMOUNTS.map((amount) => (
             <button
@@ -181,8 +181,8 @@ export default function Home() {
               onClick={() => setSelected(amount)}
               className={`py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
                 selected === amount
-                  ? "bg-[#FF6B35] text-white shadow-lg scale-[1.02]"
-                  : "bg-white text-[#1a2744] hover:bg-orange-50 border border-gray-200 shadow-sm"
+                  ? "bg-white text-[#1a3a6b] shadow-lg scale-[1.02]"
+                  : "bg-white/15 text-white hover:bg-white/25 border border-white/10"
               }`}
             >
               {amount >= 10000
@@ -197,7 +197,7 @@ export default function Home() {
       <div className="mx-4 mt-5 space-y-3">
         <button
           onClick={handleApply}
-          className="w-full py-4 rounded-2xl bg-[#FF6B35] text-white font-bold text-base shadow-lg active:scale-[0.98] transition-transform hover:bg-[#e85a24]"
+          className="w-full py-4 rounded-2xl bg-white text-[#1a3a6b] font-bold text-base shadow-lg active:scale-[0.98] transition-transform"
         >
           {selected
             ? `申請借款 NT$ ${selected.toLocaleString()}`
@@ -207,7 +207,7 @@ export default function Home() {
         {!isAuthenticated && !loading && (
           <button
             onClick={() => { window.location.href = getLoginUrl(); }}
-            className="w-full py-3.5 rounded-2xl bg-white text-[#1a2744] font-medium text-sm border border-gray-200 shadow-sm active:scale-[0.98] transition-transform hover:bg-gray-50"
+            className="w-full py-3.5 rounded-2xl bg-white/10 text-white font-medium text-sm border border-white/20 active:scale-[0.98] transition-transform"
           >
             登入後查看免審額度
           </button>
@@ -222,10 +222,10 @@ export default function Home() {
           { icon: "🌐", title: "全線上", desc: "無需照會，線上完成" },
           { icon: "✅", title: "通過率高", desc: "不拒審，人人可申請" },
         ].map((f) => (
-          <div key={f.title} className="bg-white rounded-xl p-3.5 border border-gray-100 shadow-sm">
+          <div key={f.title} className="bg-white/10 rounded-xl p-3.5 border border-white/10">
             <div className="text-xl mb-1">{f.icon}</div>
-            <p className="text-[#1a2744] text-sm font-semibold">{f.title}</p>
-            <p className="text-gray-500 text-xs mt-0.5">{f.desc}</p>
+            <p className="text-white text-sm font-semibold">{f.title}</p>
+            <p className="text-white/60 text-xs mt-0.5">{f.desc}</p>
           </div>
         ))}
       </div>
@@ -234,7 +234,7 @@ export default function Home() {
       <div className="mx-4 mt-4 mb-2">
         <button
           onClick={() => setShowPrivacy(true)}
-          className="w-full flex items-center justify-center gap-1.5 py-2 text-gray-400 hover:text-gray-600 transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 py-2 text-white/50 hover:text-white/70 transition-colors"
         >
           <Shield className="w-3.5 h-3.5" />
           <span className="text-xs">個人資料使用法律規範</span>
@@ -248,11 +248,11 @@ export default function Home() {
       {showPrivacy && <PrivacyModal onClose={() => setShowPrivacy(false)} />}
 
       {/* Bottom nav */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-100 flex shadow-lg">
+      <div className="sticky bottom-0 bg-white border-t border-gray-100 flex">
         <Link href="/" className="flex-1">
           <div className="flex flex-col items-center py-3 gap-1 cursor-pointer">
-            <Zap className="w-5 h-5 text-[#FF6B35]" />
-            <span className="text-xs text-[#FF6B35] font-medium">貸款入口</span>
+            <Zap className="w-5 h-5 text-[#2563eb]" />
+            <span className="text-xs text-[#2563eb] font-medium">貸款入口</span>
           </div>
         </Link>
         <Link href={isAuthenticated ? "/dashboard/loans" : getLoginUrl()} className="flex-1">

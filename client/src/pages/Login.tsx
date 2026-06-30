@@ -30,7 +30,7 @@ export default function Login() {
   const registerMutation = trpc.auth.register.useMutation({
     onSuccess: async () => {
       await utils.auth.me.invalidate();
-      toast.success("註冊成功！歡迎加入極限貸");
+      toast.success("註冊成功！歡迎加入閃電貸");
       navigate("/dashboard");
     },
     onError: (err) => {
@@ -46,6 +46,7 @@ export default function Login() {
       toast.error("請填寫手機號碼和密碼");
       return;
     }
+    // 驗證台灣手機號碼格式
     if (!/^09\d{8}$/.test(phone)) {
       toast.error("請輸入正確的手機號碼（09 開頭，共 10 碼）");
       return;
@@ -63,44 +64,44 @@ export default function Login() {
 
   return (
     <div
-      className="min-h-screen bg-gray-50 flex flex-col"
+      className="min-h-screen bg-[#1a3a6b] flex flex-col"
       style={{ fontFamily: "'Noto Sans TC', sans-serif" }}
     >
       {/* Top bar */}
-      <div className="flex items-center px-5 pt-6 pb-4 bg-white border-b border-gray-100 shadow-sm">
+      <div className="flex items-center px-5 pt-6 pb-2">
         <button
           onClick={() => navigate("/")}
-          className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center mr-3 active:scale-95 transition-transform"
+          className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center mr-3 active:scale-95 transition-transform"
         >
-          <ArrowLeft className="w-4 h-4 text-gray-600" />
+          <ArrowLeft className="w-4 h-4 text-white" />
         </button>
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#FF6B35] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
             <Zap className="w-4 h-4 text-white" />
           </div>
-          <span className="text-[#1a2744] font-bold text-lg tracking-wide">極限貸</span>
+          <span className="text-white font-bold text-lg tracking-wide">閃電貸</span>
         </div>
       </div>
 
       {/* Header */}
-      <div className="px-6 mt-6 mb-6">
-        <h1 className="text-[#1a2744] text-2xl font-bold mb-1">
+      <div className="px-6 mt-6 mb-8">
+        <h1 className="text-white text-2xl font-bold mb-1">
           {mode === "login" ? "歡迎回來" : "建立帳號"}
         </h1>
-        <p className="text-gray-500 text-sm">
-          {mode === "login" ? "登入以繼續使用借貸服務" : "註冊成為極限貸會員"}
+        <p className="text-white/60 text-sm">
+          {mode === "login" ? "登入以繼續使用借貸服務" : "註冊成為閃電貸會員"}
         </p>
       </div>
 
       {/* Tab switcher */}
       <div className="mx-5 mb-6">
-        <div className="bg-gray-100 rounded-xl p-1 flex">
+        <div className="bg-white/10 rounded-xl p-1 flex">
           <button
             onClick={() => setMode("login")}
             className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
               mode === "login"
-                ? "bg-white text-[#FF6B35] shadow"
-                : "text-gray-500"
+                ? "bg-white text-[#1a3a6b] shadow"
+                : "text-white/70"
             }`}
           >
             登入
@@ -109,8 +110,8 @@ export default function Login() {
             onClick={() => setMode("register")}
             className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
               mode === "register"
-                ? "bg-white text-[#FF6B35] shadow"
-                : "text-gray-500"
+                ? "bg-white text-[#1a3a6b] shadow"
+                : "text-white/70"
             }`}
           >
             註冊
@@ -120,66 +121,70 @@ export default function Login() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="mx-5 space-y-4">
+        {/* Name (register only) */}
         {mode === "register" && (
           <div>
-            <label className="text-gray-600 text-xs mb-1.5 block">姓名（選填）</label>
+            <label className="text-white/70 text-xs mb-1.5 block">姓名（選填）</label>
             <div className="relative">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="請輸入您的姓名"
-                className="w-full bg-white border border-gray-200 rounded-xl py-3.5 pl-10 pr-4 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-[#FF6B35] focus:ring-1 focus:ring-[#FF6B35]/30 transition-all shadow-sm"
+                className="w-full bg-white/10 border border-white/15 rounded-xl py-3.5 pl-10 pr-4 text-white placeholder-white/30 text-sm focus:outline-none focus:border-white/40 focus:bg-white/15 transition-all"
               />
             </div>
           </div>
         )}
 
+        {/* Phone */}
         <div>
-          <label className="text-gray-600 text-xs mb-1.5 block">手機號碼</label>
+          <label className="text-white/70 text-xs mb-1.5 block">手機號碼</label>
           <div className="relative">
-            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="例：0912345678"
-              className="w-full bg-white border border-gray-200 rounded-xl py-3.5 pl-10 pr-4 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-[#FF6B35] focus:ring-1 focus:ring-[#FF6B35]/30 transition-all shadow-sm"
+              className="w-full bg-white/10 border border-white/15 rounded-xl py-3.5 pl-10 pr-4 text-white placeholder-white/30 text-sm focus:outline-none focus:border-white/40 focus:bg-white/15 transition-all"
               required
             />
           </div>
         </div>
 
+        {/* Password */}
         <div>
-          <label className="text-gray-600 text-xs mb-1.5 block">
+          <label className="text-white/70 text-xs mb-1.5 block">
             密碼{mode === "register" && "（至少 6 個字元）"}
           </label>
           <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
             <input
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={mode === "register" ? "設定密碼（至少 6 碼）" : "請輸入密碼"}
-              className="w-full bg-white border border-gray-200 rounded-xl py-3.5 pl-10 pr-12 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-[#FF6B35] focus:ring-1 focus:ring-[#FF6B35]/30 transition-all shadow-sm"
+              className="w-full bg-white/10 border border-white/15 rounded-xl py-3.5 pl-10 pr-12 text-white placeholder-white/30 text-sm focus:outline-none focus:border-white/40 focus:bg-white/15 transition-all"
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
         </div>
 
+        {/* Submit */}
         <div className="pt-2">
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-4 rounded-2xl bg-[#FF6B35] text-white font-bold text-base shadow-lg active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[#e85a24]"
+            className="w-full py-4 rounded-2xl bg-white text-[#1a3a6b] font-bold text-base shadow-lg active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isLoading
               ? (mode === "login" ? "登入中..." : "註冊中...")
@@ -190,21 +195,21 @@ export default function Login() {
 
       {/* Footer note */}
       <div className="mx-5 mt-6">
-        <p className="text-gray-400 text-xs text-center leading-relaxed">
+        <p className="text-white/40 text-xs text-center leading-relaxed">
           {mode === "register"
-            ? "註冊即表示您同意極限貸的服務條款與隱私政策"
-            : <>忘記密碼？請<Link href="/service" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#e85a24] transition-colors">聯繫客服</Link>協助重設</>}
+            ? "註冊即表示您同意閃電貸的服務條款與隱私政策"
+            : <>忘記密碼？請<Link href="/service" className="text-white/70 underline underline-offset-2 hover:text-white transition-colors">聯繫客服</Link>協助重設</>}
         </p>
       </div>
 
       {/* Security badge */}
-      <div className="mx-5 mt-4 bg-white rounded-xl p-3 flex items-center gap-2.5 border border-gray-100 shadow-sm">
-        <div className="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
-          <span className="text-green-500 text-sm">🔒</span>
+      <div className="mx-5 mt-4 bg-white/5 rounded-xl p-3 flex items-center gap-2.5 border border-white/10">
+        <div className="w-7 h-7 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0">
+          <span className="text-green-400 text-sm">🔒</span>
         </div>
         <div>
-          <p className="text-gray-700 text-xs font-medium">安全加密保護</p>
-          <p className="text-gray-400 text-xs">您的個人資料受到 SSL 加密保護</p>
+          <p className="text-white/70 text-xs font-medium">安全加密保護</p>
+          <p className="text-white/40 text-xs">您的個人資料受到 SSL 加密保護</p>
         </div>
       </div>
 
